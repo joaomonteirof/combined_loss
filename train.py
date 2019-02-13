@@ -15,15 +15,15 @@ parser.add_argument('--epochs', type=int, default=500, metavar='N', help='number
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.1)')
 parser.add_argument('--l2', type=float, default=5e-4, metavar='lambda', help='L2 wheight decay coefficient (default: 0.0005)')
 parser.add_argument('--momentum', type=float, default=0.9, metavar='lambda', help='Momentum (default: 0.9)')
-parser.add_argument('--ngpus', type=int, default=0, help='Number of GPUs to use. Default=0 (no GPU)')
 parser.add_argument('--checkpoint-epoch', type=int, default=None, metavar='N', help='epoch to load for checkpointing. If None, training starts from scratch')
 parser.add_argument('--checkpoint-path', type=str, default=None, metavar='Path', help='Path for checkpointing')
 parser.add_argument('--data-path', type=str, default='./data/', metavar='Path', help='Path to data .hdf')
 parser.add_argument('--seed', type=int, default=42, metavar='S', help='random seed (default: 42)')
 parser.add_argument('--n-workers', type=int, default=4, metavar='N', help='Workers for data loading. Default is 4')
 parser.add_argument('--model', choices=['vgg', 'resnet', 'densenet'], default='resnet')
+parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables GPU use')
 args = parser.parse_args()
-args.cuda = True if args.ngpus>0 and torch.cuda.is_available() else False
+args.cuda = True if not args.no_cuda and torch.cuda.is_available() else False
 
 transform_train = transforms.Compose([transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor(),])
 transform_test = transforms.ToTensor()
@@ -40,9 +40,6 @@ elif args.model == 'resnet':
 	model = resnet.ResNet18()
 elif args.model == 'densenet':
 	model = densenet.densenet_cifar()
-
-if args.ngpus > 1:
-	model = torch.nn.DataParallel(model, device_ids=list(range(args.ngpus)))
 
 if args.cuda:
 	model = model.cuda()
