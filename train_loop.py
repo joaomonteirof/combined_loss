@@ -170,6 +170,9 @@ class TrainLoop(object):
 			x = x.cuda()
 			y = y.cuda()
 
+		x = x.view(x.size(0)*x.size(1), x.size(2), x.size(3), x.size(4))
+		y = y.view(y.size(0)*y.size(1))
+
 		with torch.no_grad():
 
 			out, embeddings = self.model.forward(x)
