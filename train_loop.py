@@ -51,6 +51,8 @@ class TrainLoop(object):
 	def train(self, n_epochs=1, save_every=1):
 
 		while self.cur_epoch < n_epochs:
+
+			print(' ')
 			print('Epoch {}/{}'.format(self.cur_epoch+1, n_epochs))
 			train_iter = tqdm(enumerate(self.train_loader))
 
@@ -115,9 +117,10 @@ class TrainLoop(object):
 		print('Training done!')
 
 		if self.valid_loader is not None:
-			print('Best validation loss and corresponding epoch: {:0.4f}, {}'.format(np.min(self.history['valid_loss']), 1+np.argmin(self.history['valid_loss'])))
+			print('Best error rate and corresponding epoch: {:0.4f}, {}'.format(np.min(self.history['ErrorRate']), 1+np.argmin(self.history['ErrorRate'])))
+			print('Best error rate and corresponding epoch: {:0.4f}, {}'.format(np.min(self.history['EER']), 1+np.argmin(self.history['EER'])))
 
-			return np.min(self.history['valid_loss'])
+			return np.min(self.history['ErrorRate'])
 
 	def train_step(self, batch):
 

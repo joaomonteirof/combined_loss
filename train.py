@@ -9,8 +9,8 @@ from models import vgg, resnet, densenet
 
 # Training settings
 parser = argparse.ArgumentParser(description='Cifar10 Classification')
-parser.add_argument('--batch-size', type=int, default=128, metavar='N', help='input batch size for training (default: 128)')
-parser.add_argument('--valid-batch-size', type=int, default=100, metavar='N', help='input batch size for testing (default: 100)')
+parser.add_argument('--batch-size', type=int, default=64, metavar='N', help='input batch size for training (default: 64)')
+parser.add_argument('--valid-batch-size', type=int, default=256, metavar='N', help='input batch size for testing (default: 256)')
 parser.add_argument('--epochs', type=int, default=500, metavar='N', help='number of epochs to train (default: 500)')
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.1)')
 parser.add_argument('--l2', type=float, default=5e-4, metavar='lambda', help='L2 wheight decay coefficient (default: 0.0005)')
