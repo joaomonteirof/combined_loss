@@ -6,6 +6,7 @@ from train_loop import TrainLoop
 import torch.optim as optim
 from torchvision import datasets, transforms
 from models import vgg, resnet, densenet
+from data_load import Loader
 
 # Training settings
 parser = argparse.ArgumentParser(description='Cifar10 Classification')
@@ -17,7 +18,8 @@ parser.add_argument('--l2', type=float, default=5e-4, metavar='lambda', help='L2
 parser.add_argument('--momentum', type=float, default=0.9, metavar='lambda', help='Momentum (default: 0.9)')
 parser.add_argument('--checkpoint-epoch', type=int, default=None, metavar='N', help='epoch to load for checkpointing. If None, training starts from scratch')
 parser.add_argument('--checkpoint-path', type=str, default=None, metavar='Path', help='Path for checkpointing')
-parser.add_argument('--data-path', type=str, default='./data/', metavar='Path', help='Path to data .hdf')
+parser.add_argument('--data-path', type=str, default='./data/cifar10_train_data.hdf', metavar='Path', help='Path to data')
+parser.add_argument('--valid-data-path', type=str, default='./data/cifar10_test_data.hdf', metavar='Path', help='Path to data')
 parser.add_argument('--seed', type=int, default=42, metavar='S', help='random seed (default: 42)')
 parser.add_argument('--n-workers', type=int, default=4, metavar='N', help='Workers for data loading. Default is 4')
 parser.add_argument('--model', choices=['vgg', 'resnet', 'densenet'], default='resnet')
@@ -26,14 +28,11 @@ parser.add_argument('--no-cuda', action='store_true', default=False, help='Disab
 args = parser.parse_args()
 args.cuda = True if not args.no_cuda and torch.cuda.is_available() else False
 
-transform_train = transforms.Compose([transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor(),])
-transform_test = transforms.ToTensor()
-
-trainset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
+trainset = Loader(args.data_path)
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.n_workers)
 
-testset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
-test_loader = torch.utils.data.DataLoader(testset, batch_size=args.valid_batch_size, shuffle=False, num_workers=args.n_workers)
+validset = Loader(args.valid_data_path)
+valid_loader = torch.utils.data.DataLoader(validset, batch_size=args.valid_batch_size, shuffle=False, num_workers=args.n_workers)
 
 if args.model == 'vgg':
 	model = vgg.VGG('VGG16')
@@ -47,8 +46,13 @@ if args.cuda:
 
 optimizer = optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.l2, momentum=args.momentum)
 
-trainer = TrainLoop(model, optimizer, train_loader, test_loader, checkpoint_path=args.checkpoint_path, checkpoint_epoch=args.checkpoint_epoch, cuda=args.cuda)
+trainer = TrainLoop(model, optimizer, train_loader, valid_loader, checkpoint_path=args.checkpoint_path, checkpoint_epoch=args.checkpoint_epoch, cuda=args.cuda)
 
 print('Cuda Mode is: {}'.format(args.cuda))
+print('Selected model: {}'.format(args.model))
+print('Batch size: {}'.format(args.batch_size))
+print('LR: {}'.format(args.lr))
+print('Momentum: {}'.format(args.momentum))
+print('l2: {}'.format(args.l2))
 
 trainer.train(n_epochs=args.epochs, save_every=args.save_every)

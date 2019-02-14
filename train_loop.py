@@ -40,7 +40,7 @@ class TrainLoop(object):
 		self.train_loader = train_loader
 		self.valid_loader = valid_loader
 		self.history = {'train_loss': [], 'train_loss_batch': [], 'triplet_loss': [], 'triplet_loss_batch': [], 'ce_loss': [], 'ce_loss_batch': [],'ErrorRate': [], 'EER': []}
-		self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[10, 140, 350, 420], gamma=0.1)
+		self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[10, 140, 300, 420], gamma=0.1)
 		self.total_iters = 0
 		self.cur_epoch = 0
 		self.harvester = HardestNegativeTripletSelector(margin=0.1, cpu=not self.cuda_mode)
@@ -133,6 +133,9 @@ class TrainLoop(object):
 		if self.cuda_mode:
 			x = x.cuda()
 			y = y.cuda()
+
+		x = x.view(x.size(0)*x.size(1), x.size(2), x.size(3), x.size(4))
+		y = y.view(y.size(0)*y.size(1))
 
 		out, embeddings = self.model.forward(x)
 
