@@ -21,6 +21,7 @@ parser.add_argument('--data-path', type=str, default='./data/', metavar='Path', 
 parser.add_argument('--seed', type=int, default=42, metavar='S', help='random seed (default: 42)')
 parser.add_argument('--n-workers', type=int, default=4, metavar='N', help='Workers for data loading. Default is 4')
 parser.add_argument('--model', choices=['vgg', 'resnet', 'densenet'], default='resnet')
+parser.add_argument('--save-every', type=int, default=1, metavar='N', help='how many epochs to wait before logging training status. Default is 1')
 parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables GPU use')
 args = parser.parse_args()
 args.cuda = True if not args.no_cuda and torch.cuda.is_available() else False
@@ -50,4 +51,4 @@ trainer = TrainLoop(model, optimizer, train_loader, test_loader, checkpoint_path
 
 print('Cuda Mode is: {}'.format(args.cuda))
 
-trainer.train(n_epochs=args.epochs)
+trainer.train(n_epochs=args.epochs, save_every=args.save_every)

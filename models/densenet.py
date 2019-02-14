@@ -82,9 +82,8 @@ class DenseNet(nn.Module):
 		out = self.dense4(out)
 		out = F.avg_pool2d(F.relu(self.bn(out)), 4)
 		out = out.view(out.size(0), -1)
-		out = self.linear(out)
 
-		return out
+		return self.linear(out), out
 
 def DenseNet121():
 	return DenseNet(Bottleneck, [6,12,24,16], growth_rate=32)
