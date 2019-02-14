@@ -71,7 +71,7 @@ class TrainLoop(object):
 
 			self.history['train_loss'].append(train_loss/(t+1))
 			self.history['triplet_loss'].append(triplet_loss/(t+1))
-			self.history['ce_loss'].append(ce_loss/(t+1))
+			self.history['ce_loss'].append(ce/(t+1))
 
 			print(' ')
 			print('Total train loss, Triplet loss, and Cross-entropy: {:0.4f}, {:0.4f}, {:0.4f}'.format(self.history['train_loss'][-1], self.history['triplet_loss'][-1], self.history['ce_loss'][-1]))
@@ -96,10 +96,10 @@ class TrainLoop(object):
 			self.history['EER'].append(compute_eer(labels, scores))
 			self.history['ErrorRate'].append(1.-float(tot_correct)/len(self.valid_loader.dataset))
 
+			print(' ')
 			print('Current, best validation error rate, and epoch: {:0.4f}, {:0.4f}, {}'.format(self.history['ErrorRate'][-1], np.min(self.history['ErrorRate']), 1+np.argmin(self.history['ErrorRate'])))
 
 			print(' ')
-
 			print('Current, best validation EER, and epoch: {:0.4f}, {:0.4f}, {}'.format(self.history['EER'][-1], np.min(self.history['EER']), 1+np.argmin(self.history['EER'])))
 
 			self.scheduler.step()
@@ -203,6 +203,7 @@ class TrainLoop(object):
 	def checkpointing(self):
 
 		# Checkpointing
+		print(' ')
 		print('Checkpointing...')
 		ckpt = {'model_state': self.model.state_dict(),
 		'optimizer_state': self.optimizer.state_dict(),
