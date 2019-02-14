@@ -81,11 +81,12 @@ class TrainLoop(object):
 			# Validation
 
 			tot_correct = 0
+			tot_ = 0
 			scores, labels = None, None
 
 			for t, batch in enumerate(self.valid_loader):
 
-				correct, scores_batch, labels_batch = self.valid(batch)
+				correct, total, scores_batch, labels_batch = self.valid(batch)
 
 				try:
 					scores = np.concatenate([scores, scores_batch], 0)
@@ -94,9 +95,10 @@ class TrainLoop(object):
 					scores, labels = scores_batch, labels_batch
 
 				tot_correct += correct
+				tot_ += total
 
 			self.history['EER'].append(compute_eer(labels, scores))
-			self.history['ErrorRate'].append(1.-float(tot_correct)/len(self.valid_loader.dataset))
+			self.history['ErrorRate'].append(1.-float(tot_correct)/tot_)
 
 			print(' ')
 			print('Current, best validation error rate, and epoch: {:0.4f}, {:0.4f}, {}'.format(self.history['ErrorRate'][-1], np.min(self.history['ErrorRate']), 1+np.argmin(self.history['ErrorRate'])))
@@ -177,7 +179,7 @@ class TrainLoop(object):
 
 			out, embeddings = self.model.forward(x)
 			pred = F.softmax(out, dim=1).max(1)[1].long()
-			correct = pred.eq(y.squeeze()).detach().sum().item()
+			correct = pred.squeeze().eq(y.squeeze()).detach().sum().item()
 
 			triplets_idx = self.harvester.get_triplets(embeddings, y)
 
@@ -191,7 +193,7 @@ class TrainLoop(object):
 			scores_p = F.cosine_similarity(emb_a, emb_p)
 			scores_n = F.cosine_similarity(emb_a, emb_n)
 
-		return correct, np.concatenate([scores_p.detach().cpu().numpy(), scores_n.detach().cpu().numpy()], 0), np.concatenate([np.ones(scores_p.size(0)), np.zeros(scores_n.size(0))], 0)
+		return correct, x.size(0), np.concatenate([scores_p.detach().cpu().numpy(), scores_n.detach().cpu().numpy()], 0), np.concatenate([np.ones(scores_p.size(0)), np.zeros(scores_n.size(0))], 0)
 
 	def triplet_loss(self, emba, embp, embn, pn_dist=False, reduce_=True):
 
