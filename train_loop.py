@@ -1,6 +1,7 @@
 import torch
 from torch.autograd import Variable
 import torch.nn.init as init
+import torch.nn.functional as F
 
 import numpy as np
 import pickle
@@ -9,7 +10,7 @@ import os
 from glob import glob
 from tqdm import tqdm
 
-from utils.harvester import HardestNegativeTripletSelector
+from harvester import HardestNegativeTripletSelector
 
 from sklearn import metrics
 
@@ -39,7 +40,7 @@ class TrainLoop(object):
 		self.train_loader = train_loader
 		self.valid_loader = valid_loader
 		self.history = {'train_loss': [], 'train_loss_batch': [], 'triplet_loss': [], 'triplet_loss_batch': [], 'ce_loss': [], 'ce_loss_batch': [],'ErrorRate': [], 'EER': []}
-		self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[15, 180, 350, 420], gamma=0.1)
+		self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[10, 140, 350, 420], gamma=0.1)
 		self.total_iters = 0
 		self.cur_epoch = 0
 		self.harvester = HardestNegativeTripletSelector(margin=0.1, cpu=not self.cuda_mode)
@@ -73,7 +74,7 @@ class TrainLoop(object):
 			self.history['ce_loss'].append(ce_loss/(t+1))
 
 			print(' ')
-			print('Total train loss, Triplet loss, and Cross-entropy: {:0.4f}, {:0.4f}, {:0.4f}'.format(self.history['train_loss'][-1], (self.history['triplet_loss'][-1], self.history['ce_loss'][-1]))
+			print('Total train loss, Triplet loss, and Cross-entropy: {:0.4f}, {:0.4f}, {:0.4f}'.format(self.history['train_loss'][-1], self.history['triplet_loss'][-1], self.history['ce_loss'][-1]))
 
 			# Validation
 
@@ -101,22 +102,15 @@ class TrainLoop(object):
 
 			print('Current, best validation EER, and epoch: {:0.4f}, {:0.4f}, {}'.format(self.history['EER'][-1], np.min(self.history['EER']), 1+np.argmin(self.history['EER'])))
 
-			self.cur_epoch += 1
-
-			if valid_loss < self.last_best_val_loss:
-				self.checkpointing()
-				self.its_without_improv = 0
-				self.last_best_val_loss = valid_loss
-
 			self.scheduler.step()
 
 			print(' ')
 			print('Current LR: {}'.format(self.optimizer.param_groups[0]['lr']))
 
-			self.cur_epoch += 1
-
-			if self.cur_epoch % save_every == 0 or self.history['ErrorRate'][-1] < np.min([np.inf]+self.history['ErrorRate'][:-1] or self.history['EER'][-1] < np.min([np.inf]+self.history['EER'][:-1]):
+			if self.cur_epoch % save_every == 0 or (self.history['ErrorRate'][-1] < np.min([np.inf]+self.history['ErrorRate'][:-1])) or (self.history['EER'][-1] < np.min([np.inf]+self.history['EER'][:-1])):
 				self.checkpointing()
+
+			self.cur_epoch += 1
 
 		print('Training done!')
 
@@ -185,8 +179,8 @@ class TrainLoop(object):
 			emb_p = torch.index_select(embeddings, 0, triplets_idx[:, 1])
 			emb_n = torch.index_select(embeddings, 0, triplets_idx[:, 2])
 
-			scores_p = torch.nn.functional.cosine_similarity(emb_a, emb_p)
-			scores_n = torch.nn.functional.cosine_similarity(emb_a, emb_n)
+			scores_p = F.cosine_similarity(emb_a, emb_p)
+			scores_n = F.cosine_similarity(emb_a, emb_n)
 
 		return correct, np.concatenate([scores_p.detach().cpu().numpy(), scores_n.detach().cpu().numpy()], 0), np.concatenate([np.ones(scores_p.size(0)), np.zeros(scores_n.size(0))], 0)
 
