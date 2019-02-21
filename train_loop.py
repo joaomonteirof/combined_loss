@@ -121,7 +121,7 @@ class TrainLoop(object):
 
 		if self.valid_loader is not None:
 			print('Best error rate and corresponding epoch: {:0.4f}, {}'.format(np.min(self.history['ErrorRate']), 1+np.argmin(self.history['ErrorRate'])))
-			print('Best error rate and corresponding epoch: {:0.4f}, {}'.format(np.min(self.history['EER']), 1+np.argmin(self.history['EER'])))
+			print('Best EER and corresponding epoch: {:0.4f}, {}'.format(np.min(self.history['EER']), 1+np.argmin(self.history['EER'])))
 
 			return np.min(self.history['ErrorRate'])
 
