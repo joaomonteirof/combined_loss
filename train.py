@@ -7,6 +7,10 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from models import vgg, resnet, densenet
 from data_load import Loader
+import numpy as np
+
+def set_np_randomseed(worker_id):
+	np.random.seed(np.random.get_state()[1][0]+worker_id)
 
 # Training settings
 parser = argparse.ArgumentParser(description='Cifar10 Classification')
@@ -29,7 +33,7 @@ args = parser.parse_args()
 args.cuda = True if not args.no_cuda and torch.cuda.is_available() else False
 
 trainset = Loader(args.data_path)
-train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.n_workers)
+train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.n_workers, worker_init_fn=set_np_randomseed)
 
 validset = Loader(args.valid_data_path)
 valid_loader = torch.utils.data.DataLoader(validset, batch_size=args.valid_batch_size, shuffle=False, num_workers=args.n_workers)

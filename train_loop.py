@@ -54,6 +54,7 @@ class TrainLoop(object):
 
 			print(' ')
 			print('Epoch {}/{}'.format(self.cur_epoch+1, n_epochs))
+			np.random.seed()
 			train_iter = tqdm(enumerate(self.train_loader))
 
 			ce=0.0
