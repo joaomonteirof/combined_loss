@@ -32,6 +32,9 @@ parser.add_argument('--no-cuda', action='store_true', default=False, help='Disab
 args = parser.parse_args()
 args.cuda = True if not args.no_cuda and torch.cuda.is_available() else False
 
+if args.cuda():
+	torch.backends.cudnn.benchmark=True
+
 trainset = Loader(args.data_path)
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.n_workers, worker_init_fn=set_np_randomseed)
 
