@@ -44,6 +44,7 @@ class TrainLoop(object):
 		self.total_iters = 0
 		self.cur_epoch = 0
 		self.harvester = HardestNegativeTripletSelector(margin=0.1, cpu=not self.cuda_mode)
+		self.harvester_val = AllTripletSelector()
 
 		if checkpoint_epoch is not None:
 			self.load_checkpoint(self.save_epoch_fmt.format(checkpoint_epoch))
@@ -182,7 +183,7 @@ class TrainLoop(object):
 			pred = F.softmax(out, dim=1).max(1)[1].long()
 			correct = pred.squeeze().eq(y.squeeze()).detach().sum().item()
 
-			triplets_idx = self.harvester.get_triplets(embeddings, y)
+			triplets_idx = self.harvester_val.get_triplets(embeddings, y)
 
 			if self.cuda_mode:
 				triplets_idx = triplets_idx.cuda()
