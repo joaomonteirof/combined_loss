@@ -10,7 +10,7 @@ import os
 from glob import glob
 from tqdm import tqdm
 
-from harvester import HardestNegativeTripletSelector
+from harvester import HardestNegativeTripletSelector, AllTripletSelector
 
 from sklearn import metrics
 
