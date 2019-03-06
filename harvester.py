@@ -7,8 +7,8 @@ import torch
 
 
 def pdist(vectors):
-	distance_matrix = -2 * vectors.mm(torch.t(vectors)) + vectors.pow(2).sum(dim=1).view(1, -1) + vectors.pow(2).sum(dim=1).view(-1, 1)
-	return distance_matrix
+	#distance_matrix = -2 * vectors.mm(torch.t(vectors)) + vectors.pow(2).sum(dim=1).view(1, -1) + vectors.pow(2).sum(dim=1).view(-1, 1)
+	return torch.norm(vectors[:, None] - vectors, dim=2, p=2)
 
 class PairSelector:
 	"""
