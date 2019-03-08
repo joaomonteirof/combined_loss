@@ -24,7 +24,7 @@ def compute_eer(y, y_score):
 
 class TrainLoop(object):
 
-	def __init__(self, model, optimizer, train_loader, valid_loader, checkpoint_path=None, checkpoint_epoch=None, cuda=True):
+	def __init__(self, model, optimizer, train_loader, valid_loader, checkmargin, point_path=None, checkpoint_epoch=None, swap=False, cuda=True):
 		if checkpoint_path is None:
 			# Save to current directory
 			self.checkpoint_path = os.getcwd()
@@ -43,6 +43,8 @@ class TrainLoop(object):
 		self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[10, 140, 300, 420], gamma=0.1)
 		self.total_iters = 0
 		self.cur_epoch = 0
+		self.swap = swap
+		self.margin = margin
 		self.harvester = HardestNegativeTripletSelector(margin=0.1, cpu=not self.cuda_mode)
 		self.harvester_val = AllTripletSelector()
 
@@ -143,6 +145,8 @@ class TrainLoop(object):
 
 		out, embeddings = self.model.forward(x)
 
+		embeddings = torch.div(embeddings, torch.norm(embeddings, 2, 1).unsqueeze(1).expand_as(embeddings))
+
 		loss_class = torch.nn.CrossEntropyLoss()(out, y)
 
 		triplets_idx = self.harvester.get_triplets(torch.div(embeddings, torch.norm(embeddings, 2, 1).unsqueeze(1).expand_as(embeddings)).detach(), y)
@@ -197,21 +201,11 @@ class TrainLoop(object):
 
 		return correct, x.size(0), np.concatenate([scores_p.detach().cpu().numpy(), scores_n.detach().cpu().numpy()], 0), np.concatenate([np.ones(scores_p.size(0)), np.zeros(scores_n.size(0))], 0)
 
-	def triplet_loss(self, emba, embp, embn, pn_dist=False, reduce_=True):
+	def triplet_loss(self, emba, embp, embn, reduce_=True):
 
-		d_ap = 1.-F.cosine_similarity(emba, embp)
-		d_an = 1.-F.cosine_similarity(emba, embn)
+		loss_ = torch.nn.TripletMarginLoss(margin=self.margin, p=2.0, eps=1e-06, swap=self.swap, reduction='mean' if reduce_ else 'none')(emba, embp, embn)
 
-		if pn_dist:
-
-			d_pn = 1.-F.cosine_similarity(embp, embn)
-
-			loss_ = ( F.softplus(d_ap - d_an) + F.softplus(-d_pn) ) / 2.
-
-		else:
-			loss_ = F.softplus(d_ap - d_an)
-
-		return loss_.mean() if reduce_ else loss_
+		return loss_
 
 	def checkpointing(self):
 
