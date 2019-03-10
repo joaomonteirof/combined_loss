@@ -24,7 +24,7 @@ def compute_eer(y, y_score):
 
 class TrainLoop(object):
 
-	def __init__(self, model, optimizer, train_loader, valid_loader, margin, checkpoint_path=None, checkpoint_epoch=None, swap=False, cuda=True):
+	def __init__(self, model, optimizer, train_loader, valid_loader, margin, lambda_, checkpoint_path=None, checkpoint_epoch=None, swap=False, cuda=True):
 		if checkpoint_path is None:
 			# Save to current directory
 			self.checkpoint_path = os.getcwd()
@@ -43,6 +43,7 @@ class TrainLoop(object):
 		self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[10, 140, 300, 420], gamma=0.1)
 		self.total_iters = 0
 		self.cur_epoch = 0
+		self.lambda_ = lambda_
 		self.swap = swap
 		self.margin = margin
 		self.harvester = HardestNegativeTripletSelector(margin=0.1, cpu=not self.cuda_mode)
@@ -146,21 +147,25 @@ class TrainLoop(object):
 		out, embeddings = self.model.forward(x)
 
 		embeddings = torch.div(embeddings, torch.norm(embeddings, 2, 1).unsqueeze(1).expand_as(embeddings))
+		embeddings_norm = torch.div(embeddings, torch.norm(embeddings, 2, 1).unsqueeze(1).expand_as(embeddings))
 
 		loss_class = torch.nn.CrossEntropyLoss()(out, y)
 
-		triplets_idx = self.harvester.get_triplets(torch.div(embeddings, torch.norm(embeddings, 2, 1).unsqueeze(1).expand_as(embeddings)).detach(), y)
+		triplets_idx, entropy_indices = self.harvester.get_triplets(embeddings_norm.detach(), y)
 
 		if self.cuda_mode:
 			triplets_idx = triplets_idx.cuda()
 
-		emb_a = torch.index_select(embeddings, 0, triplets_idx[:, 0])
-		emb_p = torch.index_select(embeddings, 0, triplets_idx[:, 1])
-		emb_n = torch.index_select(embeddings, 0, triplets_idx[:, 2])
+		emb_a = torch.index_select(embeddings_norm, 0, triplets_idx[:, 0])
+		emb_p = torch.index_select(embeddings_norm, 0, triplets_idx[:, 1])
+		emb_n = torch.index_select(embeddings_norm, 0, triplets_idx[:, 2])
 
 		loss_metric = self.triplet_loss(emb_a, emb_p, emb_n)
 
 		loss = loss_class + loss_metric
+
+		entropy_regularizer = torch.nn.functional.pairwise_distance(embeddings_norm, embeddings_norm[entropy_indices,:]).mean()
+		loss -= entropy_regularizer*self.lambda_
 
 		loss.backward()
 

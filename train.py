@@ -20,6 +20,7 @@ parser.add_argument('--epochs', type=int, default=500, metavar='N', help='number
 parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.1)')
 parser.add_argument('--l2', type=float, default=5e-4, metavar='lambda', help='L2 wheight decay coefficient (default: 0.0005)')
 parser.add_argument('--margin', type=float, default=0.3, metavar='m', help='margin fro triplet loss (default: 0.3)')
+parser.add_argument('--lamb', type=float, default=0.1, metavar='l', help='Entropy regularization penalty (default: 0.1)')
 parser.add_argument('--swap', action='store_true', default=False, help='Swaps anchor and positive depending on distance to negative example')
 parser.add_argument('--momentum', type=float, default=0.9, metavar='lambda', help='Momentum (default: 0.9)')
 parser.add_argument('--checkpoint-epoch', type=int, default=None, metavar='N', help='epoch to load for checkpointing. If None, training starts from scratch')
@@ -55,7 +56,7 @@ if args.cuda:
 
 optimizer = optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.l2, momentum=args.momentum)
 
-trainer = TrainLoop(model, optimizer, train_loader, valid_loader, margin=args.margin, checkpoint_path=args.checkpoint_path, checkpoint_epoch=args.checkpoint_epoch, swap=args.swap, cuda=args.cuda)
+trainer = TrainLoop(model, optimizer, train_loader, valid_loader, margin=args.margin, lambda_=args.lamb, checkpoint_path=args.checkpoint_path, checkpoint_epoch=args.checkpoint_epoch, swap=args.swap, cuda=args.cuda)
 
 print('Cuda Mode is: {}'.format(args.cuda))
 print('Selected model: {}'.format(args.model))
@@ -63,6 +64,7 @@ print('Batch size: {}'.format(args.batch_size))
 print('LR: {}'.format(args.lr))
 print('Momentum: {}'.format(args.momentum))
 print('l2: {}'.format(args.l2))
+print('lambda: {}'.format(args.lamb))
 print('Margin: {}'.format(args.margin))
 print('Swap: {}'.format(args.swap))
 

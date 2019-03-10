@@ -148,6 +148,8 @@ class FunctionNegativeTripletSelector(TripletSelector):
 		distance_matrix = pdist(embeddings)
 		distance_matrix = distance_matrix.cpu()
 
+		entropy_indices = torch.min(distance_matrix+1e4*torch.eye(labels.size(0)), dim=1)[1]
+
 		labels = labels.cpu().data.numpy()
 		triplets = []
 
@@ -174,7 +176,7 @@ class FunctionNegativeTripletSelector(TripletSelector):
 
 		triplets = np.array(triplets)
 
-		return torch.LongTensor(triplets)
+		return torch.LongTensor(triplets), entropy_indices
 
 
 def HardestNegativeTripletSelector(margin, cpu=False):
