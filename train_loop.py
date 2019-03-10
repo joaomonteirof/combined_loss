@@ -24,7 +24,7 @@ def compute_eer(y, y_score):
 
 class TrainLoop(object):
 
-	def __init__(self, model, optimizer, train_loader, valid_loader, checkmargin, point_path=None, checkpoint_epoch=None, swap=False, cuda=True):
+	def __init__(self, model, optimizer, train_loader, valid_loader, margin, checkpoint_path=None, checkpoint_epoch=None, swap=False, cuda=True):
 		if checkpoint_path is None:
 			# Save to current directory
 			self.checkpoint_path = os.getcwd()
