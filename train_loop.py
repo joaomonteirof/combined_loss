@@ -24,7 +24,7 @@ def compute_eer(y, y_score):
 
 class TrainLoop(object):
 
-	def __init__(self, model, optimizer, train_loader, valid_loader, margin, lambda_, checkpoint_path=None, checkpoint_epoch=None, swap=False, cuda=True):
+	def __init__(self, model, optimizer, train_loader, valid_loader, margin, lambda_, patience, checkpoint_path=None, checkpoint_epoch=None, swap=False, cuda=True):
 		if checkpoint_path is None:
 			# Save to current directory
 			self.checkpoint_path = os.getcwd()
@@ -40,7 +40,7 @@ class TrainLoop(object):
 		self.train_loader = train_loader
 		self.valid_loader = valid_loader
 		self.history = {'train_loss': [], 'train_loss_batch': [], 'triplet_loss': [], 'triplet_loss_batch': [], 'ce_loss': [], 'ce_loss_batch': [],'ErrorRate': [], 'EER': []}
-		self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[10, 140, 300, 420], gamma=0.1)
+		self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, factor=0.5, patience=patience, verbose=True, threshold=1e-4, min_lr=1e-8)
 		self.total_iters = 0
 		self.cur_epoch = 0
 		self.lambda_ = lambda_
@@ -111,7 +111,7 @@ class TrainLoop(object):
 			print(' ')
 			print('Current, best validation EER, and epoch: {:0.4f}, {:0.4f}, {}'.format(self.history['EER'][-1], np.min(self.history['EER']), 1+np.argmin(self.history['EER'])))
 
-			self.scheduler.step()
+			self.scheduler.step(self.history['ErrorRate'][-1])
 
 			print(' ')
 			print('Current LR: {}'.format(self.optimizer.param_groups[0]['lr']))

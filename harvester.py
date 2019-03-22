@@ -159,6 +159,7 @@ class FunctionNegativeTripletSelector(TripletSelector):
 			if len(label_indices) < 2:
 				continue
 			negative_indices = np.where(np.logical_not(label_mask))[0]
+
 			anchor_positives = list(combinations(label_indices, 2))  # All anchor-positive pairs
 			anchor_positives = np.array(anchor_positives)
 
