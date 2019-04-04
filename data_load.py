@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 
 class Loader(Dataset):
 
-	def __init__(self, hdf5_name, n_cycles=300):
+	def __init__(self, hdf5_name, n_cycles=1000):
 		super(Loader, self).__init__()
 		self.hdf5_name = hdf5_name
 		self.n_cycles = n_cycles
