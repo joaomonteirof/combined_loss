@@ -25,11 +25,13 @@ class Loader(Dataset):
 
 		self.n_classes = len(self.classes_list)
 
+		self.last_index = 0
+
 	def __getitem__(self, index):
 
 		if not self.open_file: self.open_file = h5py.File(self.hdf5_name, 'r')
 
-		if index == 0:
+		if index < self.last_index:
 			self.set_indices()
 
 		class_idx = index % self.n_classes
@@ -42,6 +44,8 @@ class Loader(Dataset):
 		for idx in idxs:
 			sample = self.open_file[class_][idx]
 			samples.append( torch.from_numpy( sample ).unsqueeze(0).float().contiguous() )
+
+		self.last_index = index
 
 		return torch.cat(samples, 0), torch.LongTensor(5*[self.class2label[class_]])
 
