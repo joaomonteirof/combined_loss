@@ -23,27 +23,25 @@ class Loader(Dataset):
 
 		self.class2label = {'0':0, '1':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9}
 
-		self.second_ind = 0
+		self.n_classes = len(self.classes_list)
 
 	def __getitem__(self, index):
 
 		if not self.open_file: self.open_file = h5py.File(self.hdf5_name, 'r')
 
 		if index == 0:
-			self.second_ind = 0
 			self.set_indices()
 
-		class_idx = index % len(self.classes_list)
+		class_idx = index % self.n_classes
+		second_ind = index // self.n_classes
+
 		class_ = self.classes_list[class_idx]
 
-		idxs, samples = self.indices[class_][self.second_ind], []
+		idxs, samples = self.indices[class_][second_ind], []
 
 		for idx in idxs:
 			sample = self.open_file[class_][idx]
 			samples.append( torch.from_numpy( sample ).unsqueeze(0).float().contiguous() )
-
-		if class_idx == len(self.classes_list)-1:
-			self.second_ind += 1
 
 		return torch.cat(samples, 0), torch.LongTensor(5*[self.class2label[class_]])
 
