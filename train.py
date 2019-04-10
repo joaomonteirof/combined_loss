@@ -33,6 +33,8 @@ parser.add_argument('--n-workers', type=int, default=4, metavar='N', help='Worke
 parser.add_argument('--model', choices=['vgg', 'resnet', 'densenet'], default='resnet')
 parser.add_argument('--save-every', type=int, default=1, metavar='N', help='how many epochs to wait before logging training status. Default is 1')
 parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables GPU use')
+parser.add_argument('--no-cp', action='store_true', default=False, help='Disables checkpointing')
+parser.add_argument('--verbose', type=int, default=1, metavar='N', help='Verbose is activated if > 0')
 args = parser.parse_args()
 args.cuda = True if not args.no_cuda and torch.cuda.is_available() else False
 
@@ -57,17 +59,18 @@ if args.cuda:
 
 optimizer = optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.l2, momentum=args.momentum)
 
-trainer = TrainLoop(model, optimizer, train_loader, valid_loader, margin=args.margin, lambda_=args.lamb, patience=args.patience, checkpoint_path=args.checkpoint_path, checkpoint_epoch=args.checkpoint_epoch, swap=args.swap, cuda=args.cuda)
+trainer = TrainLoop(model, optimizer, train_loader, valid_loader, margin=args.margin, lambda_=args.lamb, patience=args.patience, verbose=args.verbose, save_cp=(not args.no_cp), checkpoint_path=args.checkpoint_path, checkpoint_epoch=args.checkpoint_epoch, swap=args.swap, cuda=args.cuda)
 
-print('Cuda Mode is: {}'.format(args.cuda))
-print('Selected model: {}'.format(args.model))
-print('Batch size: {}'.format(args.batch_size))
-print('LR: {}'.format(args.lr))
-print('Momentum: {}'.format(args.momentum))
-print('l2: {}'.format(args.l2))
-print('lambda: {}'.format(args.lamb))
-print('Margin: {}'.format(args.margin))
-print('Swap: {}'.format(args.swap))
-print('Patience: {}'.format(args.patience))
+if args.verbose >0:
+	print('Cuda Mode is: {}'.format(args.cuda))
+	print('Selected model: {}'.format(args.model))
+	print('Batch size: {}'.format(args.batch_size))
+	print('LR: {}'.format(args.lr))
+	print('Momentum: {}'.format(args.momentum))
+	print('l2: {}'.format(args.l2))
+	print('lambda: {}'.format(args.lamb))
+	print('Margin: {}'.format(args.margin))
+	print('Swap: {}'.format(args.swap))
+	print('Patience: {}'.format(args.patience))
 
 trainer.train(n_epochs=args.epochs, save_every=args.save_every)

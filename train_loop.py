@@ -24,7 +24,7 @@ def compute_eer(y, y_score):
 
 class TrainLoop(object):
 
-	def __init__(self, model, optimizer, train_loader, valid_loader, margin, lambda_, patience, checkpoint_path=None, checkpoint_epoch=None, swap=False, cuda=True):
+	def __init__(self, model, optimizer, train_loader, valid_loader, margin, lambda_, patience, verbose=-1, save_cp=False, checkpoint_path=None, checkpoint_epoch=None, swap=False, cuda=True):
 		if checkpoint_path is None:
 			# Save to current directory
 			self.checkpoint_path = os.getcwd()
@@ -48,6 +48,8 @@ class TrainLoop(object):
 		self.margin = margin
 		self.harvester = HardestNegativeTripletSelector(margin=0.1, cpu=not self.cuda_mode)
 		self.harvester_val = AllTripletSelector()
+		self.verbose = verbose
+		self.save_cp = save_cp
 
 		if checkpoint_epoch is not None:
 			self.load_checkpoint(self.save_epoch_fmt.format(checkpoint_epoch))
@@ -56,10 +58,14 @@ class TrainLoop(object):
 
 		while self.cur_epoch < n_epochs:
 
-			print(' ')
-			print('Epoch {}/{}'.format(self.cur_epoch+1, n_epochs))
 			np.random.seed()
-			train_iter = tqdm(enumerate(self.train_loader))
+
+			if self.verbose>0:
+				print(' ')
+				print('Epoch {}/{}'.format(self.cur_epoch+1, n_epochs))
+				train_iter = tqdm(enumerate(self.train_loader))
+			else:
+				train_iter = enumerate(self.train_loader)
 
 			ce=0.0
 			triplet_loss=0.0
@@ -80,8 +86,9 @@ class TrainLoop(object):
 			self.history['triplet_loss'].append(triplet_loss/(t+1))
 			self.history['ce_loss'].append(ce/(t+1))
 
-			print(' ')
-			print('Total train loss, Triplet loss, and Cross-entropy: {:0.4f}, {:0.4f}, {:0.4f}'.format(self.history['train_loss'][-1], self.history['triplet_loss'][-1], self.history['ce_loss'][-1]))
+			if self.verbose>0:
+				print(' ')
+				print('Total train loss, Triplet loss, and Cross-entropy: {:0.4f}, {:0.4f}, {:0.4f}'.format(self.history['train_loss'][-1], self.history['triplet_loss'][-1], self.history['ce_loss'][-1]))
 
 			# Validation
 
@@ -105,29 +112,32 @@ class TrainLoop(object):
 			self.history['EER'].append(compute_eer(labels, scores))
 			self.history['ErrorRate'].append(1.-float(tot_correct)/tot_)
 
-			print(' ')
-			print('Current, best validation error rate, and epoch: {:0.4f}, {:0.4f}, {}'.format(self.history['ErrorRate'][-1], np.min(self.history['ErrorRate']), 1+np.argmin(self.history['ErrorRate'])))
+			if self.verbose>0:
+				print(' ')
+				print('Current, best validation error rate, and epoch: {:0.4f}, {:0.4f}, {}'.format(self.history['ErrorRate'][-1], np.min(self.history['ErrorRate']), 1+np.argmin(self.history['ErrorRate'])))
 
-			print(' ')
-			print('Current, best validation EER, and epoch: {:0.4f}, {:0.4f}, {}'.format(self.history['EER'][-1], np.min(self.history['EER']), 1+np.argmin(self.history['EER'])))
+				print(' ')
+				print('Current, best validation EER, and epoch: {:0.4f}, {:0.4f}, {}'.format(self.history['EER'][-1], np.min(self.history['EER']), 1+np.argmin(self.history['EER'])))
 
 			self.scheduler.step(self.history['ErrorRate'][-1])
 
-			print(' ')
-			print('Current LR: {}'.format(self.optimizer.param_groups[0]['lr']))
+			if self.verbose>0:
+				print(' ')
+				print('Current LR: {}'.format(self.optimizer.param_groups[0]['lr']))
 
-			if self.cur_epoch % save_every == 0 or (self.history['ErrorRate'][-1] < np.min([np.inf]+self.history['ErrorRate'][:-1])) or (self.history['EER'][-1] < np.min([np.inf]+self.history['EER'][:-1])):
+			if self.save_cp and (self.cur_epoch % save_every == 0 or (self.history['ErrorRate'][-1] < np.min([np.inf]+self.history['ErrorRate'][:-1])) or (self.history['EER'][-1] < np.min([np.inf]+self.history['EER'][:-1]))):
 				self.checkpointing()
 
 			self.cur_epoch += 1
 
-		print('Training done!')
+		if self.verbose>0:
+			print('Training done!')
 
-		if self.valid_loader is not None:
-			print('Best error rate and corresponding epoch: {:0.4f}, {}'.format(np.min(self.history['ErrorRate']), 1+np.argmin(self.history['ErrorRate'])))
-			print('Best EER and corresponding epoch: {:0.4f}, {}'.format(np.min(self.history['EER']), 1+np.argmin(self.history['EER'])))
+			if self.valid_loader is not None:
+				print('Best error rate and corresponding epoch: {:0.4f}, {}'.format(np.min(self.history['ErrorRate']), 1+np.argmin(self.history['ErrorRate'])))
+				print('Best EER and corresponding epoch: {:0.4f}, {}'.format(np.min(self.history['EER']), 1+np.argmin(self.history['EER'])))
 
-			return np.min(self.history['ErrorRate'])
+		return np.min(self.history['ErrorRate'])
 
 	def train_step(self, batch):
 
@@ -214,8 +224,9 @@ class TrainLoop(object):
 	def checkpointing(self):
 
 		# Checkpointing
-		print(' ')
-		print('Checkpointing...')
+		if self.verbose>0:
+			print(' ')
+			print('Checkpointing...')
 		ckpt = {'model_state': self.model.state_dict(),
 		'optimizer_state': self.optimizer.state_dict(),
 		'scheduler_state': self.scheduler.state_dict(),
