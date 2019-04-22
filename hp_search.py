@@ -69,6 +69,6 @@ valid_data_path = args.valid_data_path
 
 instrum = instru.Instrumentation(lr, l2, momentum, margin, lambda_, patience, swap, model, epochs, batch_size, valid_batch_size, n_workers, cuda, data_path, valid_data_path)
 
-hp_optimizer = optimization.optimizerlib.PSO(instrumentation=instrum, budget=args.budget)
+hp_optimizer = optimization.optimizerlib.RandomSearch(instrumentation=instrum, budget=args.budget)
 
-print(hp_optimizer.optimize(train))
+print(hp_optimizer.optimize(train, verbosity=2))
