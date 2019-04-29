@@ -18,7 +18,7 @@ def get_cp_name(dir_):
 
 	idx = np.random.randint(1)
 
-	fname = dir_ + str(np.random.randint(1,999999999,1)[0]) + '.pt'
+	fname = dir_ + '/' + str(np.random.randint(1,999999999,1)[0]) + '.pt'
 
 	while os.path.isfile(fname):
 		fname = dir_ + str(np.random.randint(1,999999999,1)[0]) + '.pt'
