@@ -24,7 +24,7 @@ def compute_eer(y, y_score):
 
 class TrainLoop(object):
 
-	def __init__(self, model, optimizer, train_loader, valid_loader, margin, lambda_, patience, verbose=-1, save_cp=False, checkpoint_path=None, checkpoint_epoch=None, swap=False, cuda=True):
+	def __init__(self, model, optimizer, train_loader, valid_loader, margin, lambda_, patience, verbose=-1, cp_name=None, save_cp=False, checkpoint_path=None, checkpoint_epoch=None, swap=False, cuda=True):
 		if checkpoint_path is None:
 			# Save to current directory
 			self.checkpoint_path = os.getcwd()
@@ -33,7 +33,7 @@ class TrainLoop(object):
 			if not os.path.isdir(self.checkpoint_path):
 				os.mkdir(self.checkpoint_path)
 
-		self.save_epoch_fmt = os.path.join(self.checkpoint_path, 'checkpoint_{}ep.pt')
+		self.save_epoch_fmt = os.path.join(self.checkpoint_path, cp_name) if cp_name else os.path.join(self.checkpoint_path, 'checkpoint_{}ep.pt')
 		self.cuda_mode = cuda
 		self.model = model
 		self.optimizer = optimizer
@@ -233,7 +233,11 @@ class TrainLoop(object):
 		'history': self.history,
 		'total_iters': self.total_iters,
 		'cur_epoch': self.cur_epoch}
-		torch.save(ckpt, self.save_epoch_fmt.format(self.cur_epoch))
+
+		try:
+			torch.save(ckpt, self.save_epoch_fmt.format(self.cur_epoch))
+		except:
+			torch.save(ckpt, self.save_epoch_fmt)
 
 	def load_checkpoint(self, ckpt):
 
