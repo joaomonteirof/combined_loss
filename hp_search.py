@@ -9,6 +9,7 @@ from torchvision import datasets, transforms
 from models import vgg, resnet, densenet
 from data_load import Loader
 import numpy as np
+import os
 
 def set_np_randomseed(worker_id):
 	np.random.seed(np.random.get_state()[1][0]+worker_id)
@@ -21,10 +22,6 @@ def get_cp_name(dir_):
 
 	while os.path.isfile(fname):
 		fname = dir_ + str(np.random.randint(1,999999999,1)[0]) + '.pt'
-
-	file_ = open(fname, 'wb')
-	pickle.dump(None, file_)
-	file_.close()
 
 	return fname.split('/')[-1]
 
@@ -45,7 +42,7 @@ args.cuda = True if not args.no_cuda and torch.cuda.is_available() else False
 
 def train(lr, l2, momentum, margin, lambda_, patience, swap, model, epochs, batch_size, valid_batch_size, n_workers, cuda, data_path, valid_data_path, checkpoint_path):
 
-	cp_name = get_file_name(checkpoint_path)
+	cp_name = get_cp_name(checkpoint_path)
 
 	trainset = Loader(data_path)
 	train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=n_workers, worker_init_fn=set_np_randomseed)
@@ -65,9 +62,9 @@ def train(lr, l2, momentum, margin, lambda_, patience, swap, model, epochs, batc
 
 	optimizer = optim.SGD(model.parameters(), lr=lr, weight_decay=l2, momentum=momentum)
 
-	trainer = TrainLoop(model, optimizer, train_loader, valid_loader, margin=margin, lambda_=lambda_, patience=int(patience), verbose=-1, cp_name=args.cp_name, save_cp=True, checkpoint_path=checkpoint_path, swap=swap, cuda=cuda)
+	trainer = TrainLoop(model, optimizer, train_loader, valid_loader, margin=margin, lambda_=lambda_, patience=int(patience), verbose=-1, cp_name=cp_name, save_cp=True, checkpoint_path=checkpoint_path, swap=swap, cuda=cuda)
 
-	for i in range(5)
+	for i in range(5):
 
 		if i>0:
 			print(' ')
@@ -76,6 +73,11 @@ def train(lr, l2, momentum, margin, lambda_, patience, swap, model, epochs, batc
 
 		try:
 			cost = trainer.train(n_epochs=epochs, save_every=epochs+10)
+
+			print(' ')
+			print('Best cost in file ' + cp_name + 'was: {}'.format(cost))
+			print(' ')
+
 			return cost
 		except:
 			pass
