@@ -68,7 +68,7 @@ def train(lr, l2, momentum, margin, lambda_, patience, swap, model, epochs, batc
 
 		if i>0:
 			print(' ')
-			print('Trial {}'.format(j+1))
+			print('Trial {}'.format(i+1))
 			print(' ')
 
 		try:
