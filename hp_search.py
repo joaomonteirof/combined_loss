@@ -44,10 +44,12 @@ def train(lr, l2, momentum, margin, lambda_, patience, swap, model, epochs, batc
 
 	cp_name = get_cp_name(checkpoint_path)
 
-	trainset = Loader(data_path)
+	#trainset = Loader(data_path)
+	trainset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
 	train_loader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, num_workers=n_workers, worker_init_fn=set_np_randomseed)
 
-	validset = Loader(valid_data_path)
+	#validset = Loader(valid_data_path)
+	validset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
 	valid_loader = torch.utils.data.DataLoader(validset, batch_size=valid_batch_size, shuffle=False, num_workers=n_workers)
 
 	if model == 'vgg':
