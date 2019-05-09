@@ -49,7 +49,7 @@ trainset = datasets.CIFAR10(root='./data', train=True, download=True, transform=
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.n_workers, worker_init_fn=set_np_randomseed)
 
 #validset = Loader(args.valid_data_path)
-testset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
+validset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
 valid_loader = torch.utils.data.DataLoader(validset, batch_size=args.valid_batch_size, shuffle=False, num_workers=args.n_workers)
 
 if args.model == 'vgg':
