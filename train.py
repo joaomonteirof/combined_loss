@@ -41,10 +41,15 @@ args.cuda = True if not args.no_cuda and torch.cuda.is_available() else False
 if args.cuda:
 	torch.backends.cudnn.benchmark=True
 
-trainset = Loader(args.data_path)
-train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=False, num_workers=args.n_workers, worker_init_fn=set_np_randomseed)
+transform_train = transforms.Compose([transforms.RandomCrop(32, padding=4), transforms.RandomHorizontalFlip(), transforms.ToTensor(),])
+transform_test = transforms.ToTensor()
 
-validset = Loader(args.valid_data_path)
+#trainset = Loader(args.data_path)
+trainset = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
+train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=args.n_workers, worker_init_fn=set_np_randomseed)
+
+#validset = Loader(args.valid_data_path)
+testset = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
 valid_loader = torch.utils.data.DataLoader(validset, batch_size=args.valid_batch_size, shuffle=False, num_workers=args.n_workers)
 
 if args.model == 'vgg':
